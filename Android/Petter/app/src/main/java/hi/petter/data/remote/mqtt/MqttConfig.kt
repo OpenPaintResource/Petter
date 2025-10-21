@@ -13,33 +13,61 @@ object MqttConfig {
     const val RETAINED = false
     const val NETWORK_TIMEOUT = 60_000
 
-    // MQTT Topics
+    // 非中心化通信主题设计
     object Topics {
-        object Auth {
-            fun login(userId: String) = "petter/auth/login/$userId"
-            fun register(userId: String) = "petter/auth/register/$userId"
+        // 用户发现和状态
+        object Discovery {
+            fun userBroadcast(userId: String) = "petter/discovery/user/$userId"
+            fun groupBroadcast(groupId: String) = "petter/discovery/group/$groupId"
+            const val userList = "petter/discovery/users"
+            const val groupList = "petter/discovery/groups"
         }
 
-        object Chat {
-            fun personal(senderId: String, receiverId: String) = "petter/chat/personal/$senderId/$receiverId"
-            fun group(groupId: String) = "petter/chat/group/$groupId"
+        // 群组管理
+        object Group {
+            fun create(groupId: String) = "petter/group/create/$groupId"
+            fun join(groupId: String) = "petter/group/join/$groupId"
+            fun leave(groupId: String) = "petter/group/leave/$groupId"
+            fun memberList(groupId: String) = "petter/group/members/$groupId"
+            fun groupInfo(groupId: String) = "petter/group/info/$groupId"
         }
 
+        // 消息传输
+        object Message {
+            fun direct(senderId: String, receiverId: String) = "petter/msg/direct/$senderId/$receiverId"
+            fun group(groupId: String) = "petter/msg/group/$groupId"
+            fun encrypted(senderId: String, receiverId: String) = "petter/msg/encrypted/$senderId/$receiverId"
+            fun broadcast(type: String) = "petter/msg/broadcast/$type"
+        }
+
+        // 状态同步
         object Status {
             fun online(userId: String) = "petter/status/online/$userId"
             fun offline(userId: String) = "petter/status/offline/$userId"
-            fun typing(senderId: String, receiverId: String) = "petter/status/typing/$senderId/$receiverId"
+            fun typing(groupId: String, userId: String) = "petter/status/typing/$groupId/$userId"
+            fun userStatus(userId: String) = "petter/status/user/$userId"
         }
 
-        object Contacts {
-            fun request(senderId: String, receiverId: String) = "petter/contacts/request/$senderId/$receiverId"
-            fun response(senderId: String, receiverId: String) = "petter/contacts/response/$senderId/$receiverId"
-            fun list(userId: String) = "petter/contacts/list/$userId"
+        // 群组状态
+        object GroupState {
+            fun sync(groupId: String) = "petter/group/sync/$groupId"
+            fun memberStatus(groupId: String, userId: String) = "petter/group/status/$groupId/$userId"
+            fun groupSettings(groupId: String) = "petter/group/settings/$groupId"
         }
 
-        object System {
-            fun notification(userId: String) = "petter/system/notification/$userId"
-            fun heartbeat(userId: String) = "petter/system/heartbeat/$userId"
+        // 身份验证
+        object Auth {
+            fun challenge(userId: String) = "petter/auth/challenge/$userId"
+            fun response(userId: String) = "petter/auth/response/$userId"
+            fun verify(userId: String) = "petter/auth/verify/$userId"
         }
+    }
+
+    // QoS级别定义
+    object QoS {
+        const val CRITICAL = 2  // 身份验证、群组管理消息
+        const val HIGH = 2      // 高优先级消息
+        const val NORMAL = 1    // 普通消息
+        const val BROADCAST = 0 // 广播消息
     }
 }

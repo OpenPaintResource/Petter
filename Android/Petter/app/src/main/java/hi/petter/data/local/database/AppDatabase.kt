@@ -8,23 +8,31 @@ import androidx.room.Room
 import hi.petter.data.local.database.dao.ContactDao
 import hi.petter.data.local.database.dao.MessageDao
 import hi.petter.data.local.database.dao.UserDao
+import hi.petter.data.local.database.dao.GroupDao
+import hi.petter.data.local.database.dao.GroupMemberDao
 import hi.petter.data.local.database.entities.ContactEntity
 import hi.petter.data.local.database.entities.MessageEntity
 import hi.petter.data.local.database.entities.UserEntity
+import hi.petter.data.local.database.entities.GroupEntity
+import hi.petter.data.local.database.entities.GroupMemberEntity
 
 @Database(
     entities = [
         UserEntity::class,
         ContactEntity::class,
-        MessageEntity::class
+        MessageEntity::class,
+        GroupEntity::class,
+        GroupMemberEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun contactDao(): ContactDao
     abstract fun messageDao(): MessageDao
+    abstract fun groupDao(): GroupDao
+    abstract fun groupMemberDao(): GroupMemberDao
 
     companion object {
         @Volatile

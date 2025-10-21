@@ -3,14 +3,14 @@ package hi.petter.data.repository
 import hi.petter.data.local.database.AppDatabase
 import hi.petter.data.local.database.dao.MessageDao
 import hi.petter.data.local.database.entities.MessageEntity
-import hi.petter.data.remote.mqtt.MqttClientManager
+import hi.petter.data.remote.decentralized.SimplifiedMqttManager
 import hi.petter.domain.model.Message
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class MessageRepository(
     private val database: AppDatabase,
-    private val mqttClientManager: MqttClientManager
+    private val mqttClientManager: SimplifiedMqttManager
 ) : hi.petter.domain.repository.IMessageRepository {
 
     private val messageDao: MessageDao by lazy { database.messageDao() }
@@ -31,7 +31,7 @@ class MessageRepository(
             messageDao.insertMessage(messageEntity)
 
             // Send via MQTT
-            mqttClientManager.sendChatMessage(message.to, message.content)
+            mqttClientManager.sendDirectMessage(message.to, message.content)
             true
         } catch (e: Exception) {
             // Update message status to failed
