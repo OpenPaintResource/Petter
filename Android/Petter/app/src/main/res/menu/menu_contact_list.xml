@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_search"
+        android:icon="@drawable/ic_search"
+        android:title="搜索"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_add_contact"
+        android:icon="@drawable/ic_person_add"
+        android:title="添加联系人"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_logout"
+        android:icon="@drawable/ic_logout"
+        android:title="退出登录"
+        app:showAsAction="never" />
+
+</menu>

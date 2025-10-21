@@ -3,13 +3,33 @@ pluginManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
+        // 使用阿里云提供的Gradle插件镜像源
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        // 使用阿里云提供的Google镜像源
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        // 使用阿里云提供的中央仓库镜像源
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        // 官方 Gradle 插件门户，如果需要可以保留
+        gradlePluginPortal()
+        // 其他国际镜像或仓库，视需求添加
     }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        // 使用阿里云镜像加速
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/public' }
+
+        // 备用仓库
         google()
         mavenCentral()
+        gradlePluginPortal()
+
+        // 额外的依赖库镜像
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://oss.sonatype.org/content/repositories/public/' }
     }
 }
 rootProject.name = "Petter"

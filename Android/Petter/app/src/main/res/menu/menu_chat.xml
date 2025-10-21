@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_user_info"
+        android:icon="@drawable/ic_info"
+        android:title="用户信息"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_clear_history"
+        android:icon="@drawable/ic_clear"
+        android:title="清空聊天记录"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_mute_notifications"
+        android:icon="@drawable/ic_notifications_off"
+        android:title="静音通知"
+        app:showAsAction="never" />
+
+</menu>

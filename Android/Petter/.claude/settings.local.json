@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/lilisi/.sdkman/candidates/gradle/**)",
+      "Bash(readlink:*)",
+      "Bash(gradle:*)",
+      "Read(//Users/lilisi/Petter/Android/**)",
+      "Bash(./gradlew:*)",
+      "Bash(export:*)",
+      "Bash(/Users/lilisi/.sdkman/candidates/gradle/current/bin/gradle:*)",
+      "Bash(java:*)",
+      "Bash(sdk list:*)",
+      "Bash(sdk install:*)",
+      "Bash(sdk use:*)",
+      "Bash(echo:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
