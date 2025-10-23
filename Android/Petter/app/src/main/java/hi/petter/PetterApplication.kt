@@ -1,7 +1,13 @@
 package hi.petter
 
 import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
 
+/**
+ * Petter应用程序主类
+ * 使用Hilt进行依赖注入
+ */
+@HiltAndroidApp
 class PetterApplication : Application() {
 
     override fun onCreate() {

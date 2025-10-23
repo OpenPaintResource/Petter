@@ -1,5 +1,8 @@
 package hi.petter.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Contact(
     val user: User,
     val addedDate: Long = System.currentTimeMillis(),

@@ -12,7 +12,9 @@
       "Bash(sdk list:*)",
       "Bash(sdk install:*)",
       "Bash(sdk use:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

@@ -6,7 +6,7 @@ import hi.petter.domain.repository.IContactRepository
 class SearchContactsUseCase(
     private val contactRepository: IContactRepository
 ) {
-    suspend operator fun invoke(query: String): List<User> {
-        return contactRepository.searchUsers(query)
+    suspend operator fun invoke(query: String): Result<List<hi.petter.domain.model.Contact>> {
+        return contactRepository.searchContacts(query)
     }
 }

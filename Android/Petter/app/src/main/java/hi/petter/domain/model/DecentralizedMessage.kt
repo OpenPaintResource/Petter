@@ -4,7 +4,7 @@ import java.util.Date
 
 data class DecentralizedMessage(
     val id: String,
-    val type: MessageType = MessageType.TEXT,
+    val type: DecentralizedMessageType = DecentralizedMessageType.TEXT,
     val content: String,
     val senderId: String,
     val senderName: String,
@@ -31,6 +31,8 @@ data class MessageMetadata(
     val deliveryConfirmation: Boolean = false
 )
 
+// 临时禁用这些类以避免与CommonTypes.kt冲突
+/*
 data class MessageReaction(
     val userId: String,
     val emoji: String,
@@ -47,6 +49,7 @@ data class MessageAttachment(
     val duration: Long? = null, // for audio/video
     val metadata: Map<String, String> = emptyMap()
 )
+*/
 
 data class LocationInfo(
     val latitude: Double,
@@ -63,7 +66,7 @@ enum class AttachmentType {
     IMAGE, VIDEO, AUDIO, FILE, VOICE_NOTE, LOCATION, CONTACT
 }
 
-// 扩展MessageType
-enum class MessageType {
+// 扩展MessageType - 重命名以避免冲突
+enum class DecentralizedMessageType {
     TEXT, IMAGE, VIDEO, AUDIO, FILE, LOCATION, CONTACT, SYSTEM, REACTION, TYPING
 }

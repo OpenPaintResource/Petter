@@ -1,12 +1,14 @@
 package hi.petter.domain.repository
 
 import hi.petter.domain.model.Contact
-import hi.petter.domain.model.User
+import kotlinx.coroutines.flow.Flow
 
 interface IContactRepository {
-    suspend fun getContacts(): List<Contact>
-    suspend fun addContact(userId: String)
-    suspend fun removeContact(userId: String)
-    suspend fun searchUsers(query: String): List<User>
-    suspend fun updateContactStatus(userId: String, isOnline: Boolean)
+    suspend fun addContact(userId: String, nickname: String): Result<Contact>
+    suspend fun removeContact(userId: String): Result<Unit>
+    suspend fun updateContact(contact: Contact): Result<Contact>
+    suspend fun getContact(userId: String): Result<Contact?>
+    suspend fun getAllContacts(): Result<List<Contact>>
+    fun observeContacts(): Flow<List<Contact>>
+    suspend fun searchContacts(query: String): Result<List<Contact>>
 }

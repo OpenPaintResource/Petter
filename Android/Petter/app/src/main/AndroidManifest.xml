@@ -34,7 +34,7 @@
 
         <!-- 主Activity -->
         <activity
-            android:name=".MainActivity"
+            android:name=".presentation.ui.main.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Petter.NoActionBar"
             android:screenOrientation="portrait">
@@ -43,20 +43,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- 登录Activity -->
-        <activity
-            android:name=".presentation.ui.auth.LoginActivity"
-            android:exported="false"
-            android:parentActivityName=".MainActivity"
-            android:screenOrientation="portrait" />
-
-        <!-- 注册Activity -->
-        <activity
-            android:name=".presentation.ui.auth.RegisterActivity"
-            android:exported="false"
-            android:parentActivityName=".presentation.ui.auth.LoginActivity"
-            android:screenOrientation="portrait" />
 
         <!-- 联系人列表Activity -->
         <activity
@@ -70,6 +56,35 @@
             android:name=".presentation.ui.chat.ChatActivity"
             android:exported="false"
             android:parentActivityName=".presentation.ui.chat.ContactListActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:screenOrientation="portrait" />
+
+        <!-- 创建群组Activity -->
+        <activity
+            android:name=".presentation.ui.group.CreateGroupActivity"
+            android:exported="false"
+            android:parentActivityName=".presentation.ui.main.MainActivity"
+            android:screenOrientation="portrait" />
+
+        <!-- 加入群组Activity -->
+        <activity
+            android:name=".presentation.ui.group.JoinGroupActivity"
+            android:exported="false"
+            android:parentActivityName=".presentation.ui.main.MainActivity"
+            android:screenOrientation="portrait" />
+
+        <!-- 群组Activity -->
+        <activity
+            android:name=".presentation.ui.group.GroupActivity"
+            android:exported="false"
+            android:parentActivityName=".presentation.ui.main.MainActivity"
+            android:screenOrientation="portrait" />
+
+        <!-- 群组聊天Activity -->
+        <activity
+            android:name=".presentation.ui.group.GroupChatActivity"
+            android:exported="false"
+            android:parentActivityName=".presentation.ui.group.GroupActivity"
             android:windowSoftInputMode="adjustResize"
             android:screenOrientation="portrait" />
 

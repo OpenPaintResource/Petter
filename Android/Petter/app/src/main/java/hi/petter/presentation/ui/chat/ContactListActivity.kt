@@ -11,8 +11,6 @@ import androidx.lifecycle.Observer
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import hi.petter.R
 import hi.petter.databinding.ActivityContactListBinding
-import hi.petter.presentation.ui.auth.LoginActivity
-import hi.petter.utils.Constants
 
 class ContactListActivity : AppCompatActivity() {
 
@@ -76,7 +74,9 @@ class ContactListActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_discover -> {
-                    Toast.makeText(this, "发现功能待开发", Toast.LENGTH_SHORT).show()
+                    // 打开消息测试界面
+                    val intent = android.content.Intent(this, hi.petter.presentation.ui.test.MessageTestActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 R.id.nav_profile -> {
@@ -118,8 +118,7 @@ class ContactListActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("user_prefs", MODE_PRIVATE)
         prefs.edit().clear().apply()
 
-        // 跳转到登录界面
-        startActivity(Intent(this, LoginActivity::class.java))
+        // 简单地关闭Activity
         finish()
     }
 }

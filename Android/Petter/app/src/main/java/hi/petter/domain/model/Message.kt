@@ -1,7 +1,9 @@
 package hi.petter.domain.model
 
+import kotlinx.serialization.Serializable
 import java.util.Date
 
+@Serializable
 data class Message(
     val id: String = "",
     val type: MessageType = MessageType.TEXT,
@@ -10,7 +12,7 @@ data class Message(
     val content: String,
     val timestamp: Long = System.currentTimeMillis(),
     val status: MessageStatus = MessageStatus.SENT,
-    val metadata: Map<String, Any> = emptyMap()
+    val metadata: Map<String, String> = emptyMap()
 ) {
     enum class MessageType {
         TEXT, IMAGE, FILE, SYSTEM

@@ -18,8 +18,8 @@ class ContactViewModel(
     private val _contacts = MutableLiveData<List<Contact>>()
     val contacts: LiveData<List<Contact>> = _contacts
 
-    private val _searchResults = MutableLiveData<List<User>>()
-    val searchResults: LiveData<List<User>> = _searchResults
+    private val _searchResults = MutableLiveData<List<Contact>>()
+    val searchResults: LiveData<List<Contact>> = _searchResults
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
@@ -35,8 +35,12 @@ class ContactViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _isLoading.postValue(true)
-                val contactList = getContactsUseCase()
-                _contacts.postValue(contactList)
+                val result = getContactsUseCase()
+                if (result.isSuccess) {
+                    _contacts.postValue(result.getOrNull() ?: emptyList())
+                } else {
+                    _errorMessage.postValue(result.exceptionOrNull()?.message ?: "加载联系人失败")
+                }
                 _errorMessage.postValue(null)
             } catch (e: Exception) {
                 _errorMessage.postValue(e.message ?: "加载联系人失败")
@@ -54,8 +58,12 @@ class ContactViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val results = searchContactsUseCase(query)
-                _searchResults.postValue(results)
+                val result = searchContactsUseCase(query)
+                if (result.isSuccess) {
+                    _searchResults.postValue(result.getOrNull() ?: emptyList())
+                } else {
+                    _errorMessage.postValue(result.exceptionOrNull()?.message ?: "搜索失败")
+                }
             } catch (e: Exception) {
                 _errorMessage.postValue("搜索失败: ${e.message}")
             }

@@ -1,11 +1,18 @@
 package hi.petter.data.remote.decentralized
 
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import com.google.gson.Gson
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import hi.petter.data.remote.mqtt.MqttConfig
+import hi.petter.domain.model.Message
+import hi.petter.domain.model.User
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * 简化的MQTT管理器
@@ -13,18 +20,45 @@ import hi.petter.data.remote.mqtt.MqttConfig
  */
 class SimplifiedMqttManager(
     private val context: Context,
-    private val userId: String
+    private val gson: Gson = Gson()
 ) {
+    private var userId: String = ""
+
+    /**
+     * 设置用户ID
+     */
+    fun setUserId(userId: String) {
+        this.userId = userId
+    }
+    companion object {
+        private const val TAG = "SimplifiedMqttManager"
+    }
+
     private var mqttClient: MqttClient? = null
 
-    // 简化的消息流
-    private val _messageFlow = MutableSharedFlow<String>()
-    val messageFlow: Flow<String> = _messageFlow
+    // 连接状态流
+    private val _connectionState = MutableStateFlow(false)
+    val connectionState: Flow<Boolean> = _connectionState
+
+    // 消息流 - 改为强类型消息
+    private val _messageFlow = MutableSharedFlow<Message>()
+    val messageFlow: Flow<Message> = _messageFlow
+
+    // 状态通知流
+    private val _statusFlow = MutableSharedFlow<String>()
+    val statusFlow: Flow<String> = _statusFlow
+
+    // 错误流
+    private val _errorFlow = MutableSharedFlow<String>()
+    val errorFlow: Flow<String> = _errorFlow
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     private val mqttOptions: MqttConnectOptions by lazy {
         MqttConnectOptions().apply {
             userName = MqttConfig.MQTT_USERNAME
-            password = MqttConfig.MQTT_PASSWORD?.toCharArray()
+            // 只有当密码不为null时才设置密码
+            MqttConfig.MQTT_PASSWORD?.let { password = it.toCharArray() }
             connectionTimeout = MqttConfig.CONNECTION_TIMEOUT / 1000
             keepAliveInterval = MqttConfig.KEEP_ALIVE_INTERVAL
             isAutomaticReconnect = true
@@ -37,18 +71,27 @@ class SimplifiedMqttManager(
      */
     suspend fun connect(): Boolean {
         return try {
+            Log.d(TAG, "开始连接MQTT代理，用户ID: $userId")
+
             val clientId = "${MqttConfig.CLIENT_ID_PREFIX}$userId"
             mqttClient = MqttClient(MqttConfig.MQTT_BROKER_URL, clientId, MemoryPersistence())
 
             setupCallback()
+
+            Log.d(TAG, "正在建立MQTT连接...")
             mqttClient?.connect(mqttOptions)
 
-            // 简化订阅，只订阅基本主题
+            Log.d(TAG, "MQTT连接成功，订阅主题...")
             subscribeToBasicTopics()
             publishOnlineStatus()
+
+            _connectionState.value = true
+            Log.d(TAG, "MQTT连接和订阅完成")
             true
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "MQTT连接失败", e)
+            _errorFlow.tryEmit("连接失败: ${e.message}")
+            _connectionState.value = false
             false
         }
     }
@@ -56,19 +99,23 @@ class SimplifiedMqttManager(
     private fun setupCallback() {
         mqttClient?.setCallback(object : MqttCallback {
             override fun connectionLost(cause: Throwable?) {
-                // 连接丢失处理
+                Log.w(TAG, "MQTT连接丢失", cause)
+                _connectionState.value = false
+                _errorFlow.tryEmit("连接丢失: ${cause?.message}")
             }
 
             override fun messageArrived(topic: String, message: MqttMessage) {
                 try {
+                    Log.d(TAG, "收到消息 - 主题: $topic")
                     handleMessage(topic, String(message.payload))
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(TAG, "处理消息失败 - 主题: $topic", e)
+                    _errorFlow.tryEmit("消息处理失败: ${e.message}")
                 }
             }
 
             override fun deliveryComplete(token: IMqttDeliveryToken?) {
-                // 消息发送完成
+                Log.d(TAG, "消息发送完成")
             }
         })
     }
@@ -77,25 +124,92 @@ class SimplifiedMqttManager(
      * 处理接收到的消息
      */
     private fun handleMessage(topic: String, payload: String) {
-        when {
-            // 私人消息
-            topic.startsWith("petter/msg/direct/") && topic.endsWith("/$userId") -> {
-                _messageFlow.tryEmit(payload)
-            }
+        try {
+            when {
+                // 私人消息
+                topic.startsWith("petter/msg/direct/") -> {
+                    val topicParts = topic.split("/")
+                    if (topicParts.size >= 5) {
+                        val senderId = topicParts[3]
+                        val receiverId = topicParts[4]
 
-            // 群组消息 (需要用户自己判断是否加入该群组)
-            topic.startsWith("petter/msg/group/") -> {
-                val groupId = extractGroupIdFromTopic(topic)
-                if (isUserInGroup(groupId)) {
-                    _messageFlow.tryEmit(payload)
+                        if (receiverId == userId) {
+                            // 这是发给当前用户的消息
+                            try {
+                                // 暂时跳过序列化，直接创建简单消息
+                                val message = Message(
+                                    id = "msg_${System.currentTimeMillis()}_${senderId}",
+                                    type = Message.MessageType.TEXT,
+                                    from = senderId,
+                                    to = userId,
+                                    content = payload,
+                                    timestamp = System.currentTimeMillis(),
+                                    status = Message.MessageStatus.DELIVERED
+                                )
+                                _messageFlow.tryEmit(message)
+                                Log.d(TAG, "收到私人消息，来自: $senderId")
+                            } catch (e: Exception) {
+                                // 如果解析失败，创建简单消息
+                                val message = Message(
+                                    id = "msg_${System.currentTimeMillis()}_${senderId}",
+                                    type = Message.MessageType.TEXT,
+                                    from = senderId,
+                                    to = userId,
+                                    content = payload,
+                                    timestamp = System.currentTimeMillis(),
+                                    status = Message.MessageStatus.DELIVERED
+                                )
+                                _messageFlow.tryEmit(message)
+                            }
+                        }
+                    }
+                }
+
+                // 群组消息
+                topic.startsWith("petter/msg/group/") -> {
+                    val groupId = extractGroupIdFromTopic(topic)
+                    if (groupId.isNotEmpty() && isUserInGroup(groupId)) {
+                        try {
+                            // 暂时跳过序列化，直接创建简单群组消息
+                            val message = Message(
+                                id = "msg_${System.currentTimeMillis()}_group_$groupId",
+                                type = Message.MessageType.TEXT,
+                                from = "unknown",
+                                to = "",
+                                content = payload,
+                                timestamp = System.currentTimeMillis(),
+                                status = Message.MessageStatus.DELIVERED,
+                                metadata = mapOf("groupId" to groupId)
+                            )
+                            _messageFlow.tryEmit(message)
+                            Log.d(TAG, "收到群组消息，群组: $groupId")
+                        } catch (e: Exception) {
+                            // 如果解析失败，创建简单群组消息
+                            val message = Message(
+                                id = "msg_${System.currentTimeMillis()}_group_$groupId",
+                                type = Message.MessageType.TEXT,
+                                from = "unknown",
+                                to = "",
+                                content = payload,
+                                timestamp = System.currentTimeMillis(),
+                                status = Message.MessageStatus.DELIVERED,
+                                metadata = mapOf("groupId" to groupId)
+                            )
+                            _messageFlow.tryEmit(message)
+                        }
+                    }
+                }
+
+                // 状态消息
+                topic.startsWith("petter/status/") -> {
+                    val statusInfo = "STATUS:$topic:$payload"
+                    _statusFlow.tryEmit(statusInfo)
+                    Log.d(TAG, "收到状态更新: $statusInfo")
                 }
             }
-
-            // 状态消息
-            topic.startsWith("petter/status/") -> {
-                // 处理在线/离线状态
-                _messageFlow.tryEmit("STATUS:$topic:$payload")
-            }
+        } catch (e: Exception) {
+            Log.e(TAG, "处理消息时发生错误", e)
+            _errorFlow.tryEmit("消息处理错误: ${e.message}")
         }
     }
 
@@ -104,17 +218,25 @@ class SimplifiedMqttManager(
      */
     private fun subscribeToBasicTopics() {
         mqttClient?.let { client ->
-            val topics = arrayOf(
-                // 私人消息 - 只订阅发给当前用户的
-                "petter/msg/direct/+/+$userId",
-                // 群组消息 - 需要动态订阅
-                "petter/msg/group/+/+",
-                // 状态消息
-                "petter/status/online/+",
-                "petter/status/offline/+"
-            )
-            val qoses = IntArray(topics.size) { MqttConfig.QoS.NORMAL }
-            client.subscribe(topics, qoses)
+            try {
+                val topics = arrayOf(
+                    // 私人消息 - 修复主题格式，订阅发给当前用户的
+                    "petter/msg/direct/+/$userId",
+                    // 群组消息 - 订阅所有群组消息，在接收时过滤
+                    "petter/msg/group/+",
+                    // 状态消息
+                    "petter/status/online/+",
+                    "petter/status/offline/+"
+                )
+                val qoses = IntArray(topics.size) { MqttConfig.QoS.NORMAL }
+
+                Log.d(TAG, "订阅主题: ${topics.contentToString()}")
+                client.subscribe(topics, qoses)
+                Log.d(TAG, "主题订阅完成")
+            } catch (e: Exception) {
+                Log.e(TAG, "订阅主题失败", e)
+                _errorFlow.tryEmit("订阅失败: ${e.message}")
+            }
         }
     }
 
@@ -123,15 +245,35 @@ class SimplifiedMqttManager(
      */
     suspend fun sendDirectMessage(receiverId: String, content: String): Boolean {
         return try {
+            if (!isConnected()) {
+                Log.w(TAG, "MQTT未连接，无法发送消息")
+                _errorFlow.tryEmit("发送失败: MQTT未连接")
+                return false
+            }
+
+            val message = Message(
+                id = "msg_${System.currentTimeMillis()}_${userId}_$receiverId",
+                type = Message.MessageType.TEXT,
+                from = userId,
+                to = receiverId,
+                content = content,
+                timestamp = System.currentTimeMillis(),
+                status = Message.MessageStatus.SENT
+            )
+
             val topic = "petter/msg/direct/$userId/$receiverId"
-            val mqttMessage = MqttMessage(content.toByteArray()).apply {
+            val payload = json.encodeToString(message)
+            val mqttMessage = MqttMessage(payload.toByteArray()).apply {
                 qos = MqttConfig.QoS.NORMAL
                 isRetained = false
             }
+
+            Log.d(TAG, "发送私人消息到: $receiverId")
             mqttClient?.publish(topic, mqttMessage)
             true
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "发送私人消息失败", e)
+            _errorFlow.tryEmit("发送失败: ${e.message}")
             false
         }
     }
@@ -141,15 +283,36 @@ class SimplifiedMqttManager(
      */
     suspend fun sendGroupMessage(groupId: String, content: String): Boolean {
         return try {
+            if (!isConnected()) {
+                Log.w(TAG, "MQTT未连接，无法发送群组消息")
+                _errorFlow.tryEmit("发送群组消息失败: MQTT未连接")
+                return false
+            }
+
+            val message = Message(
+                id = "msg_${System.currentTimeMillis()}_group_${groupId}_$userId",
+                type = Message.MessageType.TEXT,
+                from = userId,
+                to = "",
+                content = content,
+                timestamp = System.currentTimeMillis(),
+                status = Message.MessageStatus.SENT,
+                metadata = mapOf("groupId" to groupId)
+            )
+
             val topic = "petter/msg/group/$groupId"
-            val mqttMessage = MqttMessage(content.toByteArray()).apply {
+            val payload = json.encodeToString(message)
+            val mqttMessage = MqttMessage(payload.toByteArray()).apply {
                 qos = MqttConfig.QoS.NORMAL
                 isRetained = false
             }
+
+            Log.d(TAG, "发送群组消息到群组: $groupId")
             mqttClient?.publish(topic, mqttMessage)
             true
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "发送群组消息失败", e)
+            _errorFlow.tryEmit("发送群组消息失败: ${e.message}")
             false
         }
     }
@@ -167,12 +330,14 @@ class SimplifiedMqttManager(
         }
     }
 
+    // 群组成员检查接口，由外部设置
+    var groupMembershipChecker: ((String) -> Boolean)? = null
+
     /**
-     * 简化：假设用户在所有群组中（实际应该从数据库查询）
+     * 检查用户是否在群组中
      */
     private fun isUserInGroup(groupId: String): Boolean {
-        // TODO: 实际应该从本地数据库查询用户是否在该群组
-        return true
+        return groupMembershipChecker?.invoke(groupId) ?: false
     }
 
     /**

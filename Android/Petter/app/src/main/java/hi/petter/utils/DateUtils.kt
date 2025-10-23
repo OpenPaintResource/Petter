@@ -10,9 +10,7 @@ object DateUtils {
     private val fullDateFormat = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault())
 
     fun formatMessageTime(timestamp: Long): String {
-        val now = System.currentTimeMillis()
         val messageDate = Date(timestamp)
-        val nowDate = Date(now)
 
         return when {
             isToday(timestamp) -> {
@@ -34,7 +32,6 @@ object DateUtils {
     }
 
     fun formatChatTime(timestamp: Long): String {
-        val now = System.currentTimeMillis()
 
         return when {
             isToday(timestamp) -> {

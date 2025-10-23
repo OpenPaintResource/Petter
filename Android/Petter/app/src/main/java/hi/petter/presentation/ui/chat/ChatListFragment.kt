@@ -12,8 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import hi.petter.databinding.FragmentChatListBinding
 import hi.petter.domain.model.Contact
 import hi.petter.presentation.ui.chat.adapter.ChatPreviewAdapter
-import hi.petter.presentation.ui.auth.LoginActivity
-import hi.petter.utils.Constants
 
 class ChatListFragment : Fragment() {
 
@@ -41,8 +39,8 @@ class ChatListFragment : Fragment() {
         chatAdapter = ChatPreviewAdapter { contact ->
             // 跳转到聊天界面
             val intent = Intent(requireContext(), ChatActivity::class.java).apply {
-                putExtra(Constants.EXTRA_USER_ID, contact.user.id)
-                putExtra(Constants.EXTRA_USER_NAME, contact.getDisplayName())
+                putExtra("user_id", contact.user.id)
+                putExtra("user_name", contact.getDisplayName())
             }
             startActivity(intent)
         }

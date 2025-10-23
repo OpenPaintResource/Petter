@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an Android application called "Petter" built with Kotlin and Android Gradle Plugin 7.2.1. The project targets Android 10+ (minSdk 29) and uses a standard Android app structure.
+This is an Android instant messaging application called "Petter" built with Kotlin and Clean Architecture. The app features decentralized messaging using MQTT protocol, with support for direct messages, group chats, and user authentication. The project targets Android 10+ (minSdk 21) and uses Hilt for dependency injection.
 
 ## Build and Development Commands
 
@@ -36,35 +36,60 @@ This is an Android application called "Petter" built with Kotlin and Android Gra
 ```
 
 ### Gradle Configuration
-The project uses Chinese mirror repositories (Aliyun) for better build performance in China. Key settings:
-- Android Gradle Plugin 7.2.1
-- Kotlin 1.7.10
-- compileSdk 32, targetSdk 32
-- JVM target: 1.8
+- Android Gradle Plugin 7.4.2, Kotlin 1.8.20
+- compileSdk 32, targetSdk 32, minSdk 21
+- JVM target: 11
+- Uses Hilt for dependency injection
+- Room Database temporarily disabled due to Apple Silicon compatibility
 
 ## Architecture
 
-### Project Structure
-- `app/src/main/java/hi/petter/` - Main application source code
-- `app/src/test/` - Unit tests (run on JVM)
-- `app/src/androidTest/` - Instrumented tests (run on Android device)
-- `app/src/main/res/` - Android resources (layouts, values, etc.)
+### Clean Architecture Layers
+The app follows Clean Architecture with clear separation of concerns:
 
-### Key Components
-- **MainActivity** - Single activity app entry point
-- **Application ID**: `hi.petter`
-- **Package Structure**: Standard Android package hierarchy under `hi.petter`
+- **Domain Layer**: Business logic, use cases, models, and repository interfaces
+  - `domain/model/` - Core business models (User, Message, Group, Contact, etc.)
+  - `domain/usecase/` - Use cases for specific business operations
+  - `domain/repository/` - Repository interfaces for data access
 
-### Dependencies
-- AndroidX libraries (core, appcompat, material, constraintlayout)
-- JUnit for unit testing
-- Espresso for UI testing
-- Material Design components
+- **Data Layer**: Data implementation and network handling
+  - `data/remote/api/` - REST API service definitions
+  - `data/remote/decentralized/` - MQTT-based decentralized messaging
+  - `data/remote/network/` - Network configuration (Hilt modules)
+  - `data/remote/model/` - Network DTOs and response models
+  - `data/remote/repository/` - Remote data repository implementations
+  - `data/repository/` - Base repository classes
+
+- **Presentation Layer**: UI components and view models
+  - `presentation/base/` - Base classes and common UI components
+  - `presentation/ui/auth/` - Authentication (Login/Register)
+  - `presentation/ui/chat/` - Direct messaging interface
+  - `presentation/ui/group/` - Group chat functionality
+  - `presentation/ui/main/` - Main navigation and home
+
+### Key Technologies
+- **MQTT Messaging**: Uses Eclipse Paho MQTT client for decentralized messaging
+- **Hilt**: Dependency injection throughout the app
+- **Coroutines**: Asynchronous programming with Kotlin coroutines
+- **ViewBinding**: Type-safe view binding
+- **Material Design**: Material Components for UI
+
+### Message Flow Architecture
+The app uses a decentralized messaging approach:
+- Direct messages: `petter/msg/direct/{senderId}/{receiverId}`
+- Group messages: `petter/msg/group/{groupId}`
+- User status: `petter/status/online/{userId}`, `petter/status/offline/{userId}`
+
+### Important Files
+- `SimplifiedMqttManager.kt` - Core MQTT client handling decentralized messaging
+- `MqttConfig.kt` - MQTT broker configuration
+- `PetterApplication.kt` - Application class with Hilt setup
+- `NetworkModule.kt` - Hilt module for network dependencies
 
 ## Development Notes
 
-- The project uses Kotlin as the primary development language
-- Follows standard Android architecture patterns
-- No additional frameworks or libraries beyond basic AndroidX dependencies
-- Uses official Material Design components
-- Chinese repository configuration is in place for Gradle dependencies
+- Room Database is temporarily disabled due to Apple Silicon compatibility issues
+- The app uses a simplified approach to group management via MQTT topics
+- All network operations use coroutines for proper async handling
+- Chinese comments are used throughout the codebase
+- MQTT connection handles automatic reconnection and status broadcasting

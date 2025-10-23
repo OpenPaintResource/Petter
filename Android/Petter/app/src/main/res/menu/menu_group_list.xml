@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_search"
+        android:icon="@drawable/ic_search"
+        android:title="搜索群组"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_join_group"
+        android:icon="@drawable/ic_group_add"
+        android:title="加入群组"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_create_group"
+        android:icon="@drawable/ic_add"
+        android:title="创建群组"
+        app:showAsAction="ifRoom" />
+
+</menu>

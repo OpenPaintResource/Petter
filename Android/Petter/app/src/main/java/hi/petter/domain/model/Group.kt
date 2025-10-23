@@ -1,7 +1,9 @@
 package hi.petter.domain.model
 
+import kotlinx.serialization.Serializable
 import java.util.Date
 
+@Serializable
 data class Group(
     val id: String,
     val name: String,
@@ -16,6 +18,7 @@ data class Group(
     val status: GroupStatus = GroupStatus.ACTIVE
 )
 
+@Serializable
 data class GroupMember(
     val userId: String,
     val groupId: String,
@@ -24,9 +27,10 @@ data class GroupMember(
     val joinedTime: Long = System.currentTimeMillis(),
     val isOnline: Boolean = false,
     val lastSeen: Long = 0L,
-    val permissions: Set<MemberPermission> = setOf(MemberPermission.READ_MESSAGES)
+    val permissions: Set<String> = setOf("READ_MESSAGES")
 )
 
+@Serializable
 data class GroupSettings(
     val allowInvites: Boolean = true,
     val requireApproval: Boolean = false,

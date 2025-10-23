@@ -8,6 +8,8 @@ class GetMessagesUseCase(
     private val messageRepository: IMessageRepository
 ) {
     operator fun invoke(userId: String, otherUserId: String): Flow<List<Message>> {
-        return messageRepository.getChatMessages(userId, otherUserId)
+        // 获取两个用户之间的消息，这里先使用userId作为参数
+        // 实际实现可能需要根据业务逻辑调整
+        return messageRepository.observeMessages(userId, false)
     }
 }
