@@ -9,12 +9,11 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import hi.petter.domain.model.Group
 import hi.petter.utils.DateUtils
-import javax.inject.Inject
 
 /**
  * 群组列表Adapter - 简化版本
  */
-class GroupAdapter @Inject constructor(
+class GroupAdapter(
     private val onGroupClick: (String) -> Unit
 ) : ListAdapter<Group, GroupAdapter.GroupViewHolder>(GroupDiffCallback()) {
 
@@ -40,6 +39,7 @@ class GroupAdapter @Inject constructor(
             text2?.text = "${group.description} • ${group.memberCount} 成员 • ${DateUtils.formatChatTime(group.createdTime)}"
 
             itemView.setOnClickListener {
+                android.util.Log.d("GroupAdapter", "点击群组: ${group.name} (ID: ${group.id})")
                 onGroupClick(group.id)
             }
         }

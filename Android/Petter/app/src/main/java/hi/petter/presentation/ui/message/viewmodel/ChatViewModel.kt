@@ -39,12 +39,16 @@ class ChatViewModel @Inject constructor(
      * 初始化聊天
      */
     fun initializeChat(userId: String, isGroup: Boolean, name: String) {
+        android.util.Log.d("ChatViewModel", "初始化聊天 - chatId: $userId, isGroup: $isGroup, name: $name")
+
         currentChatId = userId
         isGroupChat = isGroup
         chatName = name
 
-        // 简化：使用传入的参数作为当前用户ID
-        currentUserId = "current_user"
+        // 获取当前用户ID - 使用设备ID作为用户标识
+        currentUserId = "current_user" // 简化处理，实际应该从用户管理器获取
+
+        android.util.Log.d("ChatViewModel", "聊天初始化完成 - currentUserId: $currentUserId, currentChatId: $currentChatId")
     }
 
     /**

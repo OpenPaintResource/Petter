@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -18,8 +19,16 @@ import javax.inject.Inject
 class ChatActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityChatBinding
-    private val viewModel: ChatViewModel by viewModels()
+    private lateinit var viewModel: ChatViewModel
     private lateinit var messageAdapter: MessageAdapter
+
+    // Intent 数据
+    private var intentUserId: String = ""
+    private var intentIsGroup: Boolean = false
+    private var intentChatName: String = ""
+
+    // 延迟初始化标志
+    private var isViewModelInitialized = false
 
     companion object {
         const val EXTRA_USER_ID = "extra_user_id"
@@ -32,26 +41,58 @@ class ChatActivity : AppCompatActivity() {
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        messageAdapter = MessageAdapter()
-        extractIntentData()
-        setupRecyclerView()
-        setupClickListeners()
-        observeViewModel()
-        loadMessages()
+        // 先提取Intent数据，但不立即初始化ViewModel
+        intentUserId = intent.getStringExtra(EXTRA_USER_ID) ?: ""
+        intentIsGroup = intent.getBooleanExtra(EXTRA_IS_GROUP, false)
+        intentChatName = intent.getStringExtra(EXTRA_CHAT_NAME) ?: ""
 
-        viewModel.connectMqttIfNeeded()
-    }
-
-    private fun extractIntentData() {
-        val userId = intent.getStringExtra(EXTRA_USER_ID) ?: ""
-        val isGroup = intent.getBooleanExtra(EXTRA_IS_GROUP, false)
-        val chatName = intent.getStringExtra(EXTRA_CHAT_NAME) ?: ""
-
-        viewModel.initializeChat(userId, isGroup, chatName)
-
-        binding.toolbar.title = chatName
+        // 设置Toolbar
+        binding.toolbar.title = intentChatName
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        messageAdapter = MessageAdapter()
+        setupRecyclerView()
+        setupClickListeners()
+
+        // 延迟初始化ViewModel到onResume中，确保Hilt完全准备就绪
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // 只在第一次onResume时初始化ViewModel
+        if (!isViewModelInitialized) {
+            initializeViewModel()
+            isViewModelInitialized = true
+        }
+    }
+
+    private fun initializeViewModel() {
+        try {
+            android.util.Log.d("ChatActivity", "初始化ViewModel - userId: $intentUserId, isGroup: $intentIsGroup, chatName: $intentChatName")
+
+            // 手动获取ViewModel
+            viewModel = androidx.lifecycle.ViewModelProvider(this)[ChatViewModel::class.java]
+            android.util.Log.d("ChatActivity", "ViewModel获取完成")
+
+            // 现在可以安全地初始化ViewModel了
+            viewModel.initializeChat(intentUserId, intentIsGroup, intentChatName)
+            android.util.Log.d("ChatActivity", "ViewModel初始化完成")
+
+            observeViewModel()
+            android.util.Log.d("ChatActivity", "观察者设置完成")
+
+            loadMessages()
+            android.util.Log.d("ChatActivity", "开始加载消息")
+
+            viewModel.connectMqttIfNeeded()
+            android.util.Log.d("ChatActivity", "MQTT连接检查完成")
+        } catch (e: Exception) {
+            android.util.Log.e("ChatActivity", "初始化ViewModel失败", e)
+            android.widget.Toast.makeText(this, "初始化聊天失败: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            finish() // 关闭Activity
+        }
     }
 
     private fun setupRecyclerView() {
@@ -124,6 +165,13 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        viewModel.disconnectMqtt()
+        // 只有在ViewModel已经初始化的情况下才断开MQTT连接
+        if (isViewModelInitialized) {
+            try {
+                viewModel.disconnectMqtt()
+            } catch (e: Exception) {
+                // 忽略销毁时的异常，可能是Hilt已经不可用
+            }
+        }
     }
 }

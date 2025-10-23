@@ -51,11 +51,20 @@
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
 
-        <!-- 聊天Activity -->
+        <!-- 聊天Activity (旧版本) -->
         <activity
             android:name=".presentation.ui.chat.ChatActivity"
             android:exported="false"
             android:parentActivityName=".presentation.ui.chat.ContactListActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:screenOrientation="portrait" />
+
+        <!-- 消息聊天Activity (新版本，使用Hilt) -->
+        <activity
+            android:name=".presentation.ui.message.ChatActivity"
+            android:exported="false"
+            android:parentActivityName=".presentation.ui.main.MainActivity"
+            android:theme="@style/Theme.Petter.NoActionBar"
             android:windowSoftInputMode="adjustResize"
             android:screenOrientation="portrait" />
 
