@@ -52,6 +52,11 @@ class ChatViewModel @Inject constructor(
     }
 
     /**
+     * 获取当前用户ID
+     */
+    fun getCurrentUserId(): String = currentUserId
+
+    /**
      * 连接MQTT（如果需要）
      */
     fun connectMqttIfNeeded() {

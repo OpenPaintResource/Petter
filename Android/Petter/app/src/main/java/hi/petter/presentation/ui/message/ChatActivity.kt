@@ -80,6 +80,10 @@ class ChatActivity : AppCompatActivity() {
             viewModel.initializeChat(intentUserId, intentIsGroup, intentChatName)
             android.util.Log.d("ChatActivity", "ViewModel初始化完成")
 
+            // 设置MessageAdapter的当前用户ID
+            messageAdapter.setCurrentUserId(viewModel.getCurrentUserId())
+            android.util.Log.d("ChatActivity", "MessageAdapter用户ID设置完成")
+
             observeViewModel()
             android.util.Log.d("ChatActivity", "观察者设置完成")
 
