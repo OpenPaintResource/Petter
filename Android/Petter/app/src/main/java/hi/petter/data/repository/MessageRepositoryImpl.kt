@@ -99,6 +99,18 @@ class MessageRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * 获取最后一条消息
+     */
+    fun getLastMessage(userId: String, isGroup: Boolean): Message? {
+        return try {
+            messageDatabase.getMessagesForChat(userId, isGroup)
+                .maxByOrNull { it.timestamp }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     override suspend fun getUnreadCount(userId: String, isGroup: Boolean): Result<Int> {
         return safeApiCall {
             messageDatabase.getMessagesForChat(userId, isGroup)
